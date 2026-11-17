@@ -204,8 +204,12 @@ static void par_open_dir(id<MTLDevice> dev) {
         if (!par_open_identity(dev)) return;
         NSUInteger files = 0; uint64_t bytes = par_load_dir(&files), own = g_par_have.count, pre = par_load_prebuilt(dev);
         g_par_on = 1; g_par_valid = g_par_have.count > 0;
+#if !DM_NVN_M3
         if (pre) MLOG("管线存档：App 带了 Mac 为这台设备的 GPU（%s）编好的 %llu 条管线，首次启动不用填充；本机自己的 %llu 条", dev.architecture.name.UTF8String,
                       (unsigned long long)pre, (unsigned long long)own);
+#else
+        (void)pre;   // Metal 3 keeps archives device-local; MTLDevice.architecture is not available on macOS 15.
+#endif
         if (g_par_valid && own) MLOG("管线存档：%llu 条管线在 %lu 个文件里（共 %.1f MB），用到哪个才打开哪个", (unsigned long long)own, (unsigned long)files, bytes / 1048576.0);
         else if (!g_par_valid) MLOG("管线存档：还没有，这次%s", par_fill_light() ? "在后台把管线清单收进存档（不常驻）" : "边玩边收（游戏空闲时在后台写）");
     });
