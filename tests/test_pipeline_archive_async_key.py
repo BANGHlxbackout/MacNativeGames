@@ -19,7 +19,6 @@ class AsyncPipelineArchiveKey(unittest.TestCase):
         self.assertIn("NSString *archive_key = pso_archive_key(k, vs, fs, 0);", submit_side)
         self.assertIn("pso_new(d, archive_key, &e)", worker)
         self.assertNotIn("pso_archive_key(k", worker)
-        self.assertNotIn("pso_archive_key(k", worker)
 
 
 if __name__ == "__main__":
