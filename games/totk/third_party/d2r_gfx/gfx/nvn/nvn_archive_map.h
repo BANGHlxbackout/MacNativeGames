@@ -16,6 +16,8 @@
 #if !TARGET_OS_IPHONE
 #import <Foundation/Foundation.h>
 #include <objc/runtime.h>
+#include <dispatch/dispatch.h>
+#include <stdint.h>
 #include <stdatomic.h>
 
 static _Thread_local int g_arch_map_depth;           // archive opens in progress on this thread
