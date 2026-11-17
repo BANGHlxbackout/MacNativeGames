@@ -155,50 +155,12 @@ static _Atomic uint64_t g_par_pre_hit, g_par_pre_miss;
 static __thread int par_last_pre;             // par_archive_for's archive was one of them
 static NSString *par_pre_file(NSString *name) { return [g_par_pre_base stringByAppendingFormat:@"%@.metalarchive", name]; }
 static NSUInteger par_load_prebuilt(id<MTLDevice> dev) {
+    /* The Metal 3 fork deliberately keeps archives device-local. Packaged
+       prebuilt archives are a separate distribution workflow and are not
+       required for runtime cache reuse. Avoid MTLDevice.architecture APIs. */
+    (void)dev;
     g_par_pre = [NSMutableSet set];
-    const char *off = getenv("TOTK_PIPELINE_PREBUILT"), *seed = getenv("TOTK_SHADER_SEED_DIR");
-    NSString *arch = dev.architecture.name, *dir = seed && *seed ? @(seed) : nil;
-#if !TARGET_OS_IPHONE
-    NSString *packaged = exe_rel("pipelines");
-    if ([NSFileManager.defaultManager fileExistsAtPath:[packaged stringByAppendingFormat:@"/pipelines-%@.json", arch]]) dir = packaged;
-    if (!dir) {   // the Mac app's own (build_app.py mac_pipelines; the launcher names no seed): build/pipelines since 2026-11-03,
-        dir = exe_rel("pipelines");   // beside the shader data bundle, which they would change on every packaging; before, the seed
-        if (![NSFileManager.defaultManager fileExistsAtPath:dir]) dir = exe_rel("shader-seed");
-    }
-#endif
-    if ((off && !strcmp(off, "0")) || !dir.length || !arch.length) return 0;
-    NSString *base = [dir stringByAppendingPathComponent:[@"pipelines-" stringByAppendingString:arch]];
-    NSData *jd = [NSData dataWithContentsOfFile:[base stringByAppendingString:@".json"]];
-    NSDictionary *stamp = jd ? [NSJSONSerialization JSONObjectWithData:jd options:0 error:nil] : nil;
-    if (![stamp isKindOfClass:NSDictionary.class]) {
-        NSMutableArray *other = [NSMutableArray array];
-        for (NSString *n in [NSFileManager.defaultManager contentsOfDirectoryAtPath:dir error:nil] ?: @[])
-            if ([n hasPrefix:@"pipelines-"] && [n hasSuffix:@".json"]) [other addObject:[[n substringFromIndex:10] stringByDeletingPathExtension]];
-        if (other.count) MLOG("管线存档：App 带的 Mac 编好的管线是给 %s 的，这台设备的 GPU 是 %s，首次启动照常在本机填充",
-                              [other componentsJoinedByString:@"、"].UTF8String, arch.UTF8String);
-        return 0;
-    }
-    if (![stamp[@"schema"] isEqual:@PAR_SCHEMA] || ![stamp[@"chain"] isEqual:@DMSH_CHAIN] || ![stamp[@"arch"] isEqual:arch]) {
-        MLOG("【红】管线存档：App 带的 Mac 编好的管线不对（格式 %s / 翻译链 %s / GPU %s，本机 %d / %s / %s），不用", [[stamp[@"schema"] description] UTF8String],
-             [[stamp[@"chain"] description] UTF8String], [[stamp[@"arch"] description] UTF8String], PAR_SCHEMA, DMSH_CHAIN, arch.UTF8String);
-        return 0;
-    }
-    NSString *index = [NSString stringWithContentsOfFile:[base stringByAppendingString:@".tsv"] encoding:NSUTF8StringEncoding error:nil];
-    NSUInteger n = 0, twice = 0; NSMutableSet<NSString *> *listed = [NSMutableSet set];
-    for (NSString *line in [index componentsSeparatedByString:@"\n"]) {
-        NSArray<NSString *> *c = [line componentsSeparatedByString:@"\t"];
-        if (c.count != 2 || !c[0].length || !c[1].length || [c[1] containsString:@"/"]) continue;
-        /* A key listed twice: the App's index must give each key one file (build_app.py mac_pipeline_files). 2026-11-15:
-           a pipeline written again stayed listed in its old file too, the old row came first, and the game took that
-           stale pipeline, which Metal refused (14 mesh pipelines compiled again at every start): red, so it is seen. */
-        if ([listed containsObject:c[0]]) { twice++; continue; }
-        [listed addObject:c[0]];
-        if (g_par_where[c[0]]) continue;   // the device's own file wins
-        [g_par_have addObject:c[0]]; g_par_where[c[0]] = c[1]; [g_par_pre addObject:c[1]]; n++;
-    }
-    if (twice) MLOG("【红】管线存档：App 带的索引里有 %lu 个键重复（每个键应只对应一个文件；用的是先列的那个，可能是旧的），重新打包", (unsigned long)twice);
-    g_par_pre_base = [base stringByAppendingString:@"-"];
-    return n;
+    return 0;
 }
 /* The folder for this OS version, GPU and chain: another identity's folder is removed (par_pub_wipe), identity.json is
    written under the shared lock (a start cleaning the folder must not take the stamp's temp file). 0: the archive stays
