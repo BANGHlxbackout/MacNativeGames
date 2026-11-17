@@ -257,14 +257,12 @@ void runtime_diag_xpoke(unsigned off,float value){
 #endif
 static void patch_output_res(Module *m);
 static void patch_render_res(Module *m);
-static void patch_fixed_res(Module *m);
 void runtime_game_patches(Module *m) {
     runtime_survey_init(m);
     if (strcmp(m->name, "main")) runtime_fail("1.4.3 game patches expect main");
     patch_realtime(m);
     patch_output_res(m);
     patch_render_res(m);
-    patch_fixed_res(m);
     patch_slowmo_bounce(m);
 #if !TARGET_OS_IPHONE
     diag_main=m;   /* frmwatch / xpoke */
@@ -495,32 +493,4 @@ int runtime_output_mode_cycle(void){
     if(full!=native)runtime_output_res_toggle();
     dm_gfx_set_flag("mfx_output",mfx);dm_gfx_set_flag("mfx_upscale",mfx);
     fprintf(stderr,"[totk] key 3: %s\n",name);return 1;
-}
-
-/* Optional dynamic-resolution lock. This does not select a resolution: the
-   arbitrary dimensions from TOTK_RENDER_RES remain in force. It only replaces
-   the game's per-frame scale multiplier with 1.0. Default keeps the game's
-   stock dynamic scaling; set TOTK_FIXED_RES=1 to opt in. */
-static void patch_fixed_res(Module *m) {
-    const char *e = getenv("TOTK_FIXED_RES");
-    if (!e || !*e || !strcmp(e, "0")) return;
-    if (strcmp(e, "1")) runtime_fail("TOTK_FIXED_RES must be 0 or 1");
-#if TARGET_OS_IPHONE
-    fprintf(stderr, "[totk] TOTK_FIXED_RES: not available in the embedded iOS build\n");
-    (void)m;
-#else
-    const uint64_t site = 0x5848a8;
-    const uint32_t original = 0x2a1703e9, replacement = 0x52a7f009; /* mov w9,w23 -> mov w9,#0x3f800000 */
-    if (site + 4 > m->text_end) runtime_fail("1.4.3 fixed-resolution patch outside text");
-    uint32_t word;
-    memcpy(&word, m->base + site, 4);
-    if (word != original) {
-        fprintf(stderr, "[totk] fixed-resolution patch main+%#llx: found %08x, expected %08x\n",
-                (unsigned long long)site, word, original);
-        runtime_fail("fixed-resolution patch: main does not match 1.4.3");
-    }
-    memcpy(m->base + site, &replacement, 4);
-    fprintf(stderr, "[totk] 1.4.3 dynamic resolution disabled: render dimensions remain controlled by TOTK_RENDER_RES (main+%#llx)\n",
-            (unsigned long long)site);
-#endif
 }
