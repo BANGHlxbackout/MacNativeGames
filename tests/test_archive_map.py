@@ -42,7 +42,12 @@ class ArchiveMap(unittest.TestCase):
     def test_every_archive_open_is_in_a_window(self):
         text = (NVN / 'totk_pipeline_archive.h').read_text()
         opens = text.count('newBinaryArchiveWithDescriptor:d ')
-        self.assertEqual(opens, text.count('arch_map_begin(); a = [dev newBinaryArchiveWithDescriptor:d error:&e]; arch_map_end();'))
+        windows = re.findall(
+            r'arch_map_begin\\(\\);\\s*id<MTLBinaryArchive> opened = '
+            r'\\[dev newBinaryArchiveWithDescriptor:d error:&e\\];\\s*arch_map_end\\(\\);',
+            text,
+        )
+        self.assertEqual(opens, len(windows))
         self.assertGreater(opens, 0)
 
 
