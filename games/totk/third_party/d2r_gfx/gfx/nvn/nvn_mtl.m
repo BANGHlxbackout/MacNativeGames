@@ -6391,8 +6391,13 @@ static void pso_pend_kick(const pso_key *k, NvShader *vs, NvShader *fs) {   // æ
     pthread_mutex_unlock(&g_pp_mu);
     if (at >= 0 || slot < 0) return;
     MTLRenderPipelineDescriptor *d = pso_desc(k, vs, fs, nil, 0); g_pp_kicked++;
+    /* k, vs and fs belong to the submit-side program state. The worker may run
+       after that state has been replaced or its stack frame has returned.
+       Materialize the archive key before dispatch; the block captures only
+       this immutable string and the descriptor, which retains its functions. */
+    NSString *archive_key = pso_archive_key(k, vs, fs, 0);
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        NSError *e = nil; NSString *key = pso_archive_key(k, vs, fs, 0); id<MTLRenderPipelineState> ps = pso_new(d, key, &e);
+        NSError *e = nil; id<MTLRenderPipelineState> ps = pso_new(d, archive_key, &e);
         pthread_mutex_lock(&g_pp_mu); g_pp[slot].ps = ps; g_pp[slot].done = 1; pthread_cond_broadcast(&g_pp_cv); pthread_mutex_unlock(&g_pp_mu);
     });
 }
