@@ -73,9 +73,6 @@ static int busy_wait(range_t *r, uintptr_t p) {
     return 1;
 }
 static void dirty_fast_init(void) {
-    static int inited;
-    if (inited) return;
-    inited = 1;
     const char *e = getenv("TOTK_DIRTY_FAST");
     if (e && !strcmp(e, "0")) g_dirty_fast = 0;
 }
@@ -217,9 +214,18 @@ void nvn_dirty_gpu_write_end(void *tok) {
     free(t->was); free(t);
 }
 
+static pthread_once_t g_dirty_init_once = PTHREAD_ONCE_INIT;
+static void dirty_init(void) {
+    g_pg = (uintptr_t)getpagesize();
+    g_shift = __builtin_ctzl(g_pg);
+    mach_timebase_info(&g_tb);
+    dirty_fast_init();
+    dm_fault_hook_register(on_fault);
+    dm_guest_write_prep_register(prep_write);
+    g_drec_on = getenv("DM_NVN_TILELOG") != NULL;
+}
 void nvn_dirty_add_range(const void *mem, size_t size) {
-    static int inited;
-    if (!inited) { inited = 1; g_pg = (uintptr_t)getpagesize(); g_shift = __builtin_ctzl(g_pg); mach_timebase_info(&g_tb); dirty_fast_init(); dm_fault_hook_register(on_fault); dm_guest_write_prep_register(prep_write); g_drec_on = getenv("DM_NVN_TILELOG") != NULL; }
+    pthread_once(&g_dirty_init_once, dirty_init);
     atomic_fetch_add(&g_adds_total, 1);
     pthread_mutex_lock(&g_slot_mu);
     int n = atomic_load(&g_nr);
