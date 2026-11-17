@@ -32,7 +32,7 @@ def function(source, name):
 
 PROGRAM = r'''#import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
-#define PAR_SCHEMA 6
+#define PAR_SCHEMA 7
 #define DMSH_CHAIN "chain-new"
 @interface FakeDevice : NSObject
 @property(copy) NSString *name;
@@ -47,11 +47,11 @@ int main(void) { @autoreleasepool {
     NSString *os = want[@"os"];
     if (want[@"chain"]) { puts("FAIL identity names the chain"); return 1; }
     struct { const char *what; NSDictionary *stamp; BOOL same; } cases[] = {
-        {"old stamp, other chain", @{@"chain": @"chain-old", @"gpu": @"Apple M4", @"os": os, @"schema": @6}, YES},
+        {"old stamp, other chain", @{@"chain": @"chain-old", @"gpu": @"Apple M4", @"os": os, @"schema": @7}, YES},
         {"stamp without chain", @{@"gpu": @"Apple M4", @"os": os, @"schema": @6}, YES},
         {"other GPU", @{@"chain": @"chain-new", @"gpu": @"Apple M3", @"os": os, @"schema": @6}, NO},
         {"other OS", @{@"chain": @"chain-new", @"gpu": @"Apple M4", @"os": @"Version 1", @"schema": @6}, NO},
-        {"other archive format", @{@"gpu": @"Apple M4", @"os": os, @"schema": @5}, NO},
+        {"other archive format", @{@"gpu": @"Apple M4", @"os": os, @"schema": @6}, NO},
         {"stamp missing the GPU", @{@"os": os, @"schema": @6}, NO},
     };
     for (size_t i = 0; i < sizeof cases / sizeof *cases; i++)
