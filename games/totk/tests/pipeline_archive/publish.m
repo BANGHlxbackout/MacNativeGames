@@ -8,6 +8,7 @@
      publish <dir> wipe     wiping the folder for another identity waits for a publication; the lock file stays the same */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../../third_party/d2r_gfx/gfx/nvn/totk_pipeline_archive_publish.h"
 #include <pthread.h>
 #include <spawn.h>
