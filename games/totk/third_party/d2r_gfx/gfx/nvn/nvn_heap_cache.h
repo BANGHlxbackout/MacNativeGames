@@ -78,7 +78,7 @@ static id<MTLTexture> rt_heap_texture(MTLTextureDescriptor *d) {
     MTLSizeAndAlign need = [g_dev heapTextureSizeAndAlignWithDescriptor:d]; if (!need.size) return nil;
     id<MTLHeap> h = rt_heap_take(d, need.size, 0);
     if (!h) { MTLHeapDescriptor *hd = [MTLHeapDescriptor new]; hd.type = MTLHeapTypePlacement; hd.size = need.size;
-        hd.storageMode = d.storageMode; hd.cpuCacheMode = d.cpuCacheMode; hd.hazardTrackingMode = MTLHazardTrackingModeUntracked;
+        hd.storageMode = d.storageMode; hd.cpuCacheMode = d.cpuCacheMode; hd.hazardTrackingMode = MTLHazardTrackingModeTracked; // Metal 3 relies on automatic hazard tracking; never use Untracked here.
         h = [g_dev newHeapWithDescriptor:hd]; if (h) { pthread_mutex_lock(&g_rt_heap_mu); g_rt_heap_made++; pthread_mutex_unlock(&g_rt_heap_mu); } }
     if (h) res_add((id<MTLResource>)h); // heap textures themselves are skipped by res_add
     id<MTLTexture> t = h ? [h newTextureWithDescriptor:d offset:0] : nil;

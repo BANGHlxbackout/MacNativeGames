@@ -26,19 +26,22 @@ int main(void) {
                                                                                        width:256 height:256 mipmapped:YES];
         d.storageMode = MTLStorageModePrivate;
         d.usage = MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget;
-        id<MTLTexture> first = rt_heap_texture(d);
-        if (!first || !first.heap) { fprintf(stderr, "first heap allocation failed\n"); return 1; }
-        void *heap = (__bridge void *)first.heap;
-        first = nil;
-        if (g_rt_heap_n != 1) { fprintf(stderr, "heap was not cached: %d\n", g_rt_heap_n); return 2; }
-        id<MTLTexture> second = rt_heap_texture(d);
-        if (!second || (__bridge void *)second.heap != heap || !g_rt_heap_reused) {
-            fprintf(stderr, "heap was not reused: n=%d reused=%llu\n", g_rt_heap_n, (unsigned long long)g_rt_heap_reused);
-            return 3;
+        void *heap = NULL;
+        @autoreleasepool {
+            id<MTLTexture> first = rt_heap_texture(d);
+            if (!first || !first.heap) { fprintf(stderr, "first heap allocation failed\\n"); return 1; }
+            heap = (__bridge void *)first.heap;
         }
-        second = nil;
+        if (g_rt_heap_n != 1) { fprintf(stderr, "heap was not cached: %d\\n", g_rt_heap_n); return 2; }
+        @autoreleasepool {
+            id<MTLTexture> second = rt_heap_texture(d);
+            if (!second || (__bridge void *)second.heap != heap || !g_rt_heap_reused) {
+                fprintf(stderr, "heap was not reused: n=%d reused=%llu\\n", g_rt_heap_n, (unsigned long long)g_rt_heap_reused);
+                return 3;
+            }
+        }
         rt_heap_trim_at(clock_gettime_nsec_np(CLOCK_UPTIME_RAW) + RT_HEAP_IDLE_NS + 1, 0);
-        if (g_rt_heap_n != 0) { fprintf(stderr, "expired heap remains: %d\n", g_rt_heap_n); return 4; }
+        if (g_rt_heap_n != 0) { fprintf(stderr, "expired heap remains: %d\\n", g_rt_heap_n); return 4; }
         puts("Metal 3 heap reuse ok");
     }
     return 0;
