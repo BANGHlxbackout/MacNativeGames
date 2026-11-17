@@ -16,13 +16,13 @@ int main(void) {
 
         NSString *source =
             @"#include <metal_stdlib>\n"
-             "using namespace metal;\n"
-             "vertex float4 archive_vertex(uint id [[vertex_id]]) {\n"
-             "  float2 p = float2((id == 1) ? 3.0f : -1.0f, (id == 2) ? 3.0f : -1.0f);\n"
-             "  return float4(p, 0.0f, 1.0f);\n"
-             "}\n"
-             "fragment float4 archive_fragment() { return float4(1.0f); }\n"
-             "kernel void archive_compute(device uint *out [[buffer(0)]], uint id [[thread_position_in_grid]]) { out[id] = id; }\n";
+             @"using namespace metal;\n"
+             @"vertex float4 archive_vertex(uint id [[vertex_id]]) {\n"
+             @"  float2 p = float2((id == 1) ? 3.0f : -1.0f, (id == 2) ? 3.0f : -1.0f);\n"
+             @"  return float4(p, 0.0f, 1.0f);\n"
+             @"}\n"
+             @"fragment float4 archive_fragment() { return float4(1.0f); }\n"
+             @"kernel void archive_compute(device uint *out [[buffer(0)]], uint id [[thread_position_in_grid]]) { out[id] = id; }\n";
         NSError *error = nil;
         id<MTLLibrary> library = [dev newLibraryWithSource:source options:nil error:&error];
         if (!library) return fail("compile Metal 3 probe shader", error);
