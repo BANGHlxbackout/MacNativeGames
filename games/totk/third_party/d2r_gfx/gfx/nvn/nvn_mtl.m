@@ -227,8 +227,14 @@ static struct { uint64_t adds, removes, live_bytes; _Atomic uint64_t alive, aliv
 static char g_alloc_track_key;
 static NSMapTable *g_res_site_of;   // resource (weak key) -> NSNumber source line
 static uint64_t g_res_live_bytes;
+static int res_on_heap(id<MTLResource> r) {
+    if (!r || ![r conformsToProtocol:@protocol(MTLTexture)]) return 0;
+    id<MTLTexture> t = (id<MTLTexture>)r;
+    while (t.parentTexture) t = t.parentTexture;
+    return t.heap != nil;
+}
 static void res_add_at(id<MTLResource> r, int site) {
-    if (!r) return;
+    if (!r || res_on_heap(r)) return;
     if (site < 0 || site >= RES_SITES) site = 0;
     pthread_mutex_lock(&g_res_mu);
     [g_res addAllocation:(id<MTLAllocation>)r];
@@ -255,7 +261,7 @@ static void res_add_at(id<MTLResource> r, int site) {
 }
 #define res_add(r) res_add_at((r), __LINE__)
 static void res_remove_body(id<MTLResource> r) {
-    if (!r) return;
+    if (!r || res_on_heap(r)) return;
     pthread_mutex_lock(&g_res_mu);
     [g_res removeAllocation:(id<MTLAllocation>)r];
     if ([g_res_objects containsObject:r]) {
@@ -327,7 +333,7 @@ static void res_check(id r, const char *what, int reg) {
     if (!is_tex && !is_buf) return;   // 采样器等不是分配 | Samplers etc. are not allocations
     id<MTLResource> a = r; int hops = 0;
     if (is_tex) { id<MTLTexture> t = (id<MTLTexture>)a; while (t.parentTexture) { t = t.parentTexture; hops++; } a = t.buffer ? (id<MTLResource>)t.buffer : (id<MTLResource>)t; }
-    pthread_mutex_lock(&g_res_mu); int ok = [g_res_objects containsObject:a]; pthread_mutex_unlock(&g_res_mu);
+    pthread_mutex_lock(&g_res_mu); int ok = res_on_heap(a) || [g_res_objects containsObject:a]; pthread_mutex_unlock(&g_res_mu);
     if (!ok) { nbad++; id<MTLTexture> t = is_tex ? (id<MTLTexture>)r : nil;
         MLOG("【红】驻留缺失 #%d：%s 槽 %d %s %p（父链 %d 层）分配 %lu B 存储 %lu%s", nbad, what, reg, is_tex ? "贴图" : "缓冲", (__bridge void *)a, hops, (unsigned long)a.allocatedSize, (unsigned long)a.storageMode,
              t ? [NSString stringWithFormat:@" 格式 %lu %lux%lu 类型 %lu 用途 %#lx", (unsigned long)t.pixelFormat, (unsigned long)t.width, (unsigned long)t.height, (unsigned long)t.textureType, (unsigned long)t.usage].UTF8String : ""); }
@@ -382,6 +388,14 @@ static void defer_drain(void) { @autoreleasepool {   // also called from GPU com
         d->object = nil;
     }
 } }
+
+static void retire_idle_kick(void);
+#include "nvn_heap_cache.h"
+static void retire_idle_kick(void) {
+    defer_drain();
+    rt_heap_trim_at(clock_gettime_nsec_np(CLOCK_UPTIME_RAW), 0);
+    res_commit();
+}
 
 static pthread_mutex_t g_bf_want_mu = PTHREAD_MUTEX_INITIALIZER;
 static char **g_bf_want_keys; static size_t g_bf_want_n, g_bf_want_cap; static int g_bf_want_loaded;
@@ -3330,7 +3344,8 @@ static id<MTLTexture> pkg_upload_(const tex_t *t, uint64_t *stamp, reup_key *key
     *key = reup_key_of(d);
     id<MTLTexture> mt = reup_take(key);
     if (!mt) {
-        mt = [g_dev newTextureWithDescriptor:d];
+        mt = rt_heap_texture(d);   // TOTK_HEAP_REUSE=1: reuse Metal 3 placement heaps for private textures
+        if (!mt) mt = [g_dev newTextureWithDescriptor:d];
         if (!mt) { RED_ONCE(2, "建 MTLTexture 失败 %ux%u 格式 %#x 目标 %d", t->d.width, t->d.height, t->d.format, t->d.target); return nil; }
         res_add(mt);   // 首传与重传都在这里登记驻留（Metal 4 不自动驻留；漏登 = GPU 地址页错误；复用的贴图一直驻留） | Both first upload and re-upload register residency here (Metal 4 does not make resources resident automatically; a missed registration = GPU address page fault; reused textures stay resident)
     }
