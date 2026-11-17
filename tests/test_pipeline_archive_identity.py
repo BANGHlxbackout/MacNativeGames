@@ -48,11 +48,11 @@ int main(void) { @autoreleasepool {
     if (want[@"chain"]) { puts("FAIL identity names the chain"); return 1; }
     struct { const char *what; NSDictionary *stamp; BOOL same; } cases[] = {
         {"old stamp, other chain", @{@"chain": @"chain-old", @"gpu": @"Apple M4", @"os": os, @"schema": @7}, YES},
-        {"stamp without chain", @{@"gpu": @"Apple M4", @"os": os, @"schema": @6}, YES},
-        {"other GPU", @{@"chain": @"chain-new", @"gpu": @"Apple M3", @"os": os, @"schema": @6}, NO},
-        {"other OS", @{@"chain": @"chain-new", @"gpu": @"Apple M4", @"os": @"Version 1", @"schema": @6}, NO},
+        {"stamp without chain", @{@"gpu": @"Apple M4", @"os": os, @"schema": @7}, YES},
+        {"other GPU", @{@"chain": @"chain-new", @"gpu": @"Apple M3", @"os": os, @"schema": @7}, NO},
+        {"other OS", @{@"chain": @"chain-new", @"gpu": @"Apple M4", @"os": @"Version 1", @"schema": @7}, NO},
         {"other archive format", @{@"gpu": @"Apple M4", @"os": os, @"schema": @6}, NO},
-        {"stamp missing the GPU", @{@"os": os, @"schema": @6}, NO},
+        {"stamp missing the GPU", @{@"os": os, @"schema": @7}, NO},
     };
     for (size_t i = 0; i < sizeof cases / sizeof *cases; i++)
         if (par_same_identity(cases[i].stamp, want) != cases[i].same) { printf("FAIL %%s\n", cases[i].what); return 1; }
