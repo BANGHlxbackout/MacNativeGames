@@ -40,7 +40,7 @@ int main(void) {
         computeDesc.computeFunction = compute;
 
         NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
-                          [NSString stringWithFormat:@"m3-pipeline-%@.metalarchive", NSUUID.UUID.UUIDString]];
+                          [NSString stringWithFormat:@"m3-pipeline-%@.metalarchive", [[NSUUID UUID] UUIDString]]];
         NSURL *url = [NSURL fileURLWithPath:path];
         MTLBinaryArchiveDescriptor *writeDesc = [MTLBinaryArchiveDescriptor new];
         id<MTLBinaryArchive> writer = [dev newBinaryArchiveWithDescriptor:writeDesc error:&error];
