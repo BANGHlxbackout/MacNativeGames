@@ -31,7 +31,7 @@ class ArchiveMap(unittest.TestCase):
     def test_the_hook_on_this_mac(self):
         with tempfile.TemporaryDirectory() as tmp:
             exe = Path(tmp) / 'probe'
-            build = subprocess.run(['xcrun', 'clang', '-fobjc-arc', '-w', f'-I{NVN}', str(PROBE), '-framework', 'Foundation',
+            build = subprocess.run(['xcrun', 'clang', '-fobjc-arc', '-fblocks', '-w', f'-I{NVN}', str(PROBE), '-framework', 'Foundation',
                                     '-framework', 'Metal', '-o', str(exe)], capture_output=True, text=True)
             self.assertEqual(build.returncode, 0, build.stderr)
             r = subprocess.run([str(exe), *external_archives()], capture_output=True, text=True, timeout=300)
