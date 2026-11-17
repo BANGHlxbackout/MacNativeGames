@@ -12,7 +12,7 @@ This branch keeps the macOS 15 / Metal 3 path. It does not import MetalFX Frame 
 
 | Variable | Default | Effect |
 |---|---:|---|
-| `TOTK_DIRTY_FAST` | on | Thread-local range lookup cache and 64-page generation blocks for dirty-page checks. Set to `0` to fall back to page-by-page scanning. |
+| `TOTK_DIRTY_FAST` | on | Thread-local range lookup caching and 64-page generation blocks for dirty-page checks. Set to `0` to disable the hash/block fast paths and use page-by-page generation checks. |
 | `TOTK_HEAP_REUSE` | off | Reuse placement heaps for eligible private render-target textures. Set to `1` to enable. Heap resources use tracked hazard mode so Metal 3's automatic hazard tracking remains active. |
 | `TOTK_PIPELINE_ARCHIVE` | on | Persist ordinary render/compute pipelines in Metal binary archives. Set to `0` to disable. Archive misses fall back to normal compilation. |
 | `TOTK_FIXED_RES` | off | Set the game's dynamic scale multiplier to 1.0. Does not choose a resolution. |

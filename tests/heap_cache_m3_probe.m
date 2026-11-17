@@ -2,6 +2,12 @@
 #import <Foundation/Foundation.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <dispatch/dispatch.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <objc/runtime.h>
+#include <time.h>
 
 static id<MTLDevice> g_dev;
 static void res_add_stub(id<MTLResource> r) { (void)r; }
