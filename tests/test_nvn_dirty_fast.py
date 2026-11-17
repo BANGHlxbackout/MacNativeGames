@@ -26,5 +26,13 @@ class DirtyFastPath(unittest.TestCase):
             self.assertIn("dirty fast path ok", run.stdout)
 
 
+class DirtyInitializationTests(unittest.TestCase):
+    def test_fault_hooks_and_page_geometry_use_pthread_once(self):
+        source = DIRTY.read_text()
+        self.assertIn("static pthread_once_t g_dirty_init_once = PTHREAD_ONCE_INIT;", source)
+        self.assertIn("pthread_once(&g_dirty_init_once, dirty_init);", source)
+        self.assertNotIn("static int inited;", source)
+
+
 if __name__ == "__main__":
     unittest.main()
