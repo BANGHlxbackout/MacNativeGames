@@ -107,9 +107,9 @@ static NSString *par_dir(void) { return [totk_rt_dir() stringByAppendingPathComp
 static NSString *par_file(NSString *name) { return [par_dir() stringByAppendingFormat:@"/%@.metalarchive", name]; }
 static NSString *par_keys_file(NSString *name) { return [par_dir() stringByAppendingFormat:@"/%@.keys", name]; }
 static NSString *par_lock_file(void) { return [totk_rt_dir() stringByAppendingPathComponent:@"pipelines.lock"]; }   // never removed
-// 5 (2026-10-29): border and tile-read pipelines are keyed with their variant (nvn_mtl.m pso_archive_key); files of 4 held
-// some under the plain pipeline's key, which then missed in every session.
-#define PAR_SCHEMA 6   /* vertex fetches omit trailing lanes proven unused by the MSL */
+/* Metal 3 fork: archive ordinary pipelines only. Border/tile-read, merged,
+   host-owned and MetalFX variants are deliberately excluded by pso_archive_key. */
+#define PAR_SCHEMA 7   /* normalized PSO keys and the Metal 3 archive eligibility policy */
 /* What the folder's files are good for: the key format, the GPU and the OS. Not the translation chain (2026-11-15, user:
    "为什么要重建？这次必须重建吗？"): a new chain changes few shaders (v27 -> v28: 18 of 18,661 .metal files differ, the other
    18,643 byte-identical), and every pipeline taken from a file is made with MTLPipelineOptionFailOnBinaryArchiveMiss, which
