@@ -24,7 +24,7 @@ class PipelineArchivePublish(unittest.TestCase):
     def setUpClass(cls):
         cls.work = tempfile.TemporaryDirectory()
         cls.exe = Path(cls.work.name) / 'publish'
-        r = subprocess.run(['xcrun', 'clang', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', str(GAME / 'tests/pipeline_archive/publish.m'),
+        r = subprocess.run(['xcrun', 'clang', '-fobjc-arc', '-fblocks', '-Wall', '-Wextra', '-Werror', str(GAME / 'tests/pipeline_archive/publish.m'),
                             '-framework', 'Foundation', '-o', str(cls.exe)], capture_output=True, text=True, timeout=120)
         if r.returncode:
             cls.work.cleanup()
