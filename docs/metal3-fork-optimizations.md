@@ -5,8 +5,7 @@ This branch keeps the macOS 15 / Metal 3 path. It does not import MetalFX Frame 
 ## Resolution
 
 - `TOTK_RENDER_RES` remains the resolution/dimension control; it is not restricted to 1080p.
-- `TOTK_FIXED_RES=1` is optional. It changes the game's dynamic scale multiplier to 1.0, while leaving the selected render dimensions alone.
-- The default is unchanged: the game's dynamic resolution remains enabled unless explicitly opted out.
+- No fixed output resolution is imposed; `TOTK_RENDER_RES` continues to select the render dimensions.
 
 ## Runtime controls
 
@@ -15,7 +14,6 @@ This branch keeps the macOS 15 / Metal 3 path. It does not import MetalFX Frame 
 | `TOTK_DIRTY_FAST` | on | Thread-local range lookup caching and 64-page generation blocks for dirty-page checks. Set to `0` to disable the hash/block fast paths and use page-by-page generation checks. |
 | `TOTK_HEAP_REUSE` | off | Reuse placement heaps for eligible private render-target textures. Set to `1` to enable. Heap resources use tracked hazard mode so Metal 3's automatic hazard tracking remains active. |
 | `TOTK_PIPELINE_ARCHIVE` | on | Persist ordinary render/compute pipelines in Metal binary archives. Set to `0` to disable. Archive misses fall back to normal compilation. |
-| `TOTK_FIXED_RES` | off | Set the game's dynamic scale multiplier to 1.0. Does not choose a resolution. |
 
 The pipeline archive intentionally excludes border-specialized, merged, host-owned, and MetalFX pipeline variants. The archive identity is scoped to GPU, OS version, and the Metal 3 fork's PSO-key schema. A cache miss is never treated as a valid pipeline: the creation path uses `MTLPipelineOptionFailOnBinaryArchiveMiss` and recompiles normally.
 
