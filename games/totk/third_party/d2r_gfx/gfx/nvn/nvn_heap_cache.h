@@ -1,3 +1,12 @@
+#import <Foundation/Foundation.h>
+#import <Metal/Metal.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <dispatch/dispatch.h>
+#include <objc/runtime.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <time.h>
+
 /* Render-target heap recycling, adapted to our storage owners from
    seedds/nxnative 7f502220 (MIT; LICENSE.nxnative). No live alias is moved.
    A heap enters this cache only after the last texture/view is destroyed;
