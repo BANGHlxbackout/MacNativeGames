@@ -3,6 +3,7 @@ Time from a USB drive held its 5.7 GB archive as 2,946 NSData, a footprint of 18
 opens an archive, only on that thread and only for .metalarchive files; with real archives on an external drive the
 footprint they add is compared, read whole against mapped."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -43,8 +44,8 @@ class ArchiveMap(unittest.TestCase):
         text = (NVN / 'totk_pipeline_archive.h').read_text()
         opens = text.count('newBinaryArchiveWithDescriptor:d ')
         windows = re.findall(
-            r'arch_map_begin\\(\\);\\s*id<MTLBinaryArchive> opened = '
-            r'\\[dev newBinaryArchiveWithDescriptor:d error:&e\\];\\s*arch_map_end\\(\\);',
+            r'arch_map_begin\(\);\s*id<MTLBinaryArchive> opened = '
+            r'\[dev newBinaryArchiveWithDescriptor:d error:&e\];\s*arch_map_end\(\);',
             text,
         )
         self.assertEqual(opens, len(windows))
